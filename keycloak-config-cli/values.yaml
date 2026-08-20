@@ -1,0 +1,28 @@
+﻿enabled: true
+appName: "app"
+
+image:
+  repository: quay.io/adorsys/keycloak-config-cli
+  tag: latest-24
+  pullPolicy: IfNotPresent
+
+keycloak:
+  url: "http://keycloak.keycloak.svc.cluster.local:8080"
+  existingSecret: "keycloak-admin-secret"
+  secretUserKey: "KEYCLOAK_ADMIN"
+  secretPasswordKey: "KEYCLOAK_ADMIN_PASSWORD"
+  availabilityCheck:
+    enabled: true
+    timeout: "180s"
+
+config:
+  realm: "company"
+  # Injected directly or loaded from app-repo/keycloak/*.yaml
+  files: {}
+
+job:
+  backoffLimit: 4
+  restartPolicy: OnFailure
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation, HookSucceeded

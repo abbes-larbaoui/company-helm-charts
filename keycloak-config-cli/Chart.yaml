@@ -1,0 +1,6 @@
+﻿apiVersion: v2
+name: keycloak-config-cli
+description: Standardized Helm library chart to run keycloak-config-cli for application repositories
+type: application
+version: 1.0.0
+appVersion: "24.0"

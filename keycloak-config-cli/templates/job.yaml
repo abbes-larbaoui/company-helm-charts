@@ -1,0 +1,65 @@
+﻿{{- if .Values.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.appName }}-keycloak-sync
+  labels:
+    {{- include "keycloak-config-cli.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-config
+  annotations:
+    {{- toYaml .Values.job.annotations | nindent 4 }}
+spec:
+  backoffLimit: {{ .Values.job.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "keycloak-config-cli.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "keycloak-config-cli.fullname" . }}
+      restartPolicy: {{ .Values.job.restartPolicy }}
+      containers:
+        - name: keycloak-config-cli
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: KEYCLOAK_URL
+              value: {{ .Values.keycloak.url | quote }}
+            - name: KEYCLOAK_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.existingSecret }}
+                  key: {{ .Values.keycloak.secretUserKey }}
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.existingSecret }}
+                  key: {{ .Values.keycloak.secretPasswordKey }}
+            - name: KEYCLOAK_AVAILABILITYCHECK_ENABLED
+              value: {{ .Values.keycloak.availabilityCheck.enabled | quote }}
+            - name: KEYCLOAK_AVAILABILITYCHECK_TIMEOUT
+              value: {{ .Values.keycloak.availabilityCheck.timeout | quote }}
+            - name: IMPORT_FILES_LOCATIONS
+              value: "/config/*"
+            - name: IMPORT_VARS_ENABLED
+              value: "true"
+            - name: IMPORT_CACHE_ENABLED
+              value: "false"
+            - name: IMPORT_MANAGED_CLIENT
+              value: "no-delete"
+            - name: IMPORT_MANAGED_CLIENT_SCOPE
+              value: "no-delete"
+            - name: IMPORT_MANAGED_ROLE
+              value: "no-delete"
+            - name: IMPORT_MANAGED_REALM_ROLE
+              value: "no-delete"
+            - name: IMPORT_MANAGED_CLIENT_ROLE
+              value: "no-delete"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.appName }}-keycloak-config
+{{- end }}
