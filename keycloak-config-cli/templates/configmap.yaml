@@ -7,15 +7,18 @@ metadata:
     {{- include "keycloak-config-cli.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak-config
 data:
-{{- if .Values.config.files }}
-  {{- range ,  := .Values.config.files }}
-  {{  }}: |
-{{  | indent 4 }}
-  {{- end }}
-{{- else }}
-  {{- range ,  :=  .Files.Glob "keycloak/*.yaml" }}
-  {{ base  }}: |
-{{ $.Files.Get  | indent 4 }}
-  {{- end }}
-{{- end }}
+  config.yaml: |
+    realm: {{ .Values.config.realm | default "company" }}
+    {{- if .Values.clients }}
+    clients:
+      {{- toYaml .Values.clients | nindent 6 }}
+    {{- end }}
+    {{- if .Values.roles }}
+    roles:
+      {{- toYaml .Values.roles | nindent 6 }}
+    {{- end }}
+    {{- if .Values.clientScopes }}
+    clientScopes:
+      {{- toYaml .Values.clientScopes | nindent 6 }}
+    {{- end }}
 {{- end }}
