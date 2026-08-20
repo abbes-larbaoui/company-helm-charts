@@ -8,17 +8,11 @@ metadata:
     app.kubernetes.io/component: keycloak-config
 data:
   config.yaml: |
-    realm: {{ .Values.config.realm | default "company" }}
-    {{- if .Values.clients }}
-    clients:
-      {{- toYaml .Values.clients | nindent 6 }}
-    {{- end }}
-    {{- if .Values.roles }}
-    roles:
-      {{- toYaml .Values.roles | nindent 6 }}
-    {{- end }}
-    {{- if .Values.clientScopes }}
-    clientScopes:
-      {{- toYaml .Values.clientScopes | nindent 6 }}
-    {{- end }}
+    {{- $realmConfig := dict "realm" (.Values.realm | default .Values.config.realm | default "company") -}}
+    {{- range $k, $v := .Values -}}
+      {{- if not (has $k (list "appName" "enabled" "image" "keycloak" "config" "job" "serviceAccount" "nameOverride" "fullnameOverride")) -}}
+        {{- $_ := set $realmConfig $k $v -}}
+      {{- end -}}
+    {{- end -}}
+    {{- toYaml $realmConfig | nindent 4 }}
 {{- end }}
